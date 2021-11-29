@@ -155,7 +155,7 @@ end;
 function TMainForm.BuildURL: String;
 begin
   Result := Format('%s%s?app_id=%s', [BASE_URL, 'latest.json', APP_ID]);
-  // Using base = 'USD'; others are not allowed by the free version.
+  // Thid uses base currency USD; others are not allowed by the free version.
 end;
 
 procedure TMainForm.edSearchCountryUTF8KeyPress(Sender: TObject; 
@@ -192,11 +192,12 @@ begin
   
   L := TStringList.Create;
   try
-    // The resource file is based on data provided by 
+    // Country names and currency names are stored in a resource file which is
+    // based on the xls file "list_one.xls" provided by 
     // https://www.six-group.com/en/products-services/financial-information/data-standards.html
-    // The used file was created from the xls file "list_one.xls"
     // It has country, currency name, currency symbol in 
     // columns 0, 1 and 2, respectively.
+    // Unnecessary lines were removed from the file.
     stream := TResourceStream.Create(HINSTANCE, 'LIST_ONE', RT_RCDATA);
     try
       L.LoadFromStream(stream);
@@ -207,7 +208,7 @@ begin
     Grid.BeginUpdate;
     try
       Grid.RowCount := L.Count;
-      for i := 1 to L.Count-1 do begin  // data start with lin #4
+      for i := 1 to L.Count-1 do begin  
         sa := L[i].Split(';');
         Grid.Cells[0, i] := sa[0];  // Country
         Grid.Cells[2, i] := sa[1];  // Full currency name
