@@ -195,8 +195,8 @@ begin
     // The resource file is based on data provided by 
     // https://www.six-group.com/en/products-services/financial-information/data-standards.html
     // The used file was created from the xls file "list_one.xls"
-    // It begins at line #5 (1-based) and has country, currency name, currency 
-    // symbol in columns 0, 1 and 2, respectively.
+    // It has country, currency name, currency symbol in 
+    // columns 0, 1 and 2, respectively.
     stream := TResourceStream.Create(HINSTANCE, 'LIST_ONE', RT_RCDATA);
     try
       L.LoadFromStream(stream);
