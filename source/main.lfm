@@ -1,0 +1,160 @@
+object MainForm: TMainForm
+  Left = 662
+  Height = 472
+  Top = 318
+  Width = 523
+  Caption = 'Exchange Rates'
+  ClientHeight = 472
+  ClientWidth = 523
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  LCLVersion = '2.3.0.0'
+  object btnGetExchangeRates: TButton
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 6
+    Height = 25
+    Top = 6
+    Width = 146
+    AutoSize = True
+    BorderSpacing.Left = 6
+    BorderSpacing.Top = 6
+    Caption = 'Update exchange rates'
+    OnClick = btnGetExchangeRatesClick
+    TabOrder = 0
+  end
+  object Grid: TStringGrid
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = btnGetExchangeRates
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 6
+    Height = 429
+    Top = 37
+    Width = 511
+    AlternateColor = clMenuBar
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    AutoFillColumns = True
+    BorderSpacing.Around = 6
+    ColCount = 4
+    ColumnClickSorts = True
+    Columns = <    
+      item
+        Title.Alignment = taCenter
+        Title.Caption = 'Country'
+        Width = 223
+      end    
+      item
+        Alignment = taRightJustify
+        SizePriority = 0
+        Title.Alignment = taCenter
+        Title.MultiLine = True
+        Title.Caption = 'Exchange rate'#13#10'(1 USD = ...)'
+        Width = 100
+      end    
+      item
+        SizePriority = 0
+        Title.Alignment = taCenter
+        Title.Caption = 'Currency'
+        Width = 120
+      end    
+      item
+        SizePriority = 0
+        Title.Alignment = taCenter
+        Title.Caption = 'Symbol'
+        Width = 64
+      end>
+    FixedCols = 0
+    MouseWheelOption = mwGrid
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goDrawFocusSelected, goColSizing, goThumbTracking, goSmoothScroll]
+    TabOrder = 2
+    OnCompareCells = GridCompareCells
+    ColWidths = (
+      223
+      100
+      120
+      64
+    )
+    Cells = (
+      1
+      1
+      0
+      'Country'
+    )
+  end
+  object Label1: TLabel
+    AnchorSideLeft.Control = btnGetExchangeRates
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = btnGetExchangeRates
+    AnchorSideTop.Side = asrCenter
+    Left = 192
+    Height = 15
+    Top = 11
+    Width = 53
+    BorderSpacing.Left = 40
+    Caption = 'Search for'
+  end
+  object edSearchCountry: TEdit
+    AnchorSideLeft.Control = Label1
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = btnGetExchangeRates
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = btnClearSearch
+    Left = 251
+    Height = 23
+    Top = 7
+    Width = 240
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Left = 6
+    BorderSpacing.Right = 4
+    OnUTF8KeyPress = edSearchCountryUTF8KeyPress
+    TabOrder = 1
+    TextHint = 'Country'
+  end
+  object btnClearSearch: TSpeedButton
+    AnchorSideTop.Control = btnGetExchangeRates
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = Owner
+    Left = 495
+    Height = 22
+    Top = 7
+    Width = 23
+    Anchors = [akTop]
+    BorderSpacing.Right = 6
+    Images = ImageList1
+    ImageIndex = 0
+    OnClick = btnClearSearchClick
+  end
+  object ImageList1: TImageList
+    Left = 240
+    Top = 192
+    Bitmap = {
+      4C7A010000001000000010000000860000000000000078DA6360183C8095615B
+      0E08E391CF04616C724C0C5B337818CEBFE465B8F01AA826178B7C36427E4736
+      2EFD220CCFFEA39B01D38B90C3D40F02CC0CDB5211EA2E82CD6066D89E862E46
+      280C80EA5F81D4F3305C7805C210F6F957F8C206D3AF175E80F461F30F2DF553
+      E27E6C61852D4CF1C53FB9F14769FA21943E89911F0800001A1C8D1F
+    }
+    BitmapAdv = {
+      4C69020000004C7A010000001800000018000000CC0000000000000078DAED55
+      410AC230101C487D8179955A90F69989A578B1F81DAB583FA12E16D248497663
+      BC75610F0993996677330596908682A928F9785B52F2D0765FA0BBAFD03D149A
+      2A2FBEDD10768DCB93327EE6C3EDE3DB92C3AF718B6838EE2FEC2E7C87C3B6C0
+      69F0CF9D0785631DC7D89AD78390C6AFDC6E86DEF7F778683DB72799B5508D35
+      AE634EEB9DCAED6B68F4A306659F893BC6DF64F9F6707DD234FEDBDFD00C72DE
+      472AB7E40D4AFCC108FC81E73FBCF99EF3B798FF4CFDD608FD99D767D9FF428E
+      5FC2C50B706E2D0C4C7A010000002000000020000000010100000000000078DA
+      ED56CB0DC2300C7527680FAC520E2021D62D55611C3E03706EBA40695A219A26
+      588EED7040B5642997A7F7623BCF0158638D6F511DA6E4C6693B258F3B83B319
+      B2E36990E0ABBDC5E670ED73B8F7195C0C407DFC0DBE29DFD80D3CC7B467FA3D
+      A67B87F14D49E36FDA399EAEC1E79E610D8DDF46BD0B6BC06AF9A9B98BB959EE
+      36AE7FB11AB4B96334A4E2A6F514EFB7C43B961AFC3A14F018332D37DE8B3435
+      C7EB500CFD5F7217E34CA4B8B73F0B087F978E3F3CE7747FD07F03C8FC75BAB3
+      8FBD3FAE57F36BEECE39C7ABB5B825FB428B5B5B83BFFFE9BE16F649E9FE8FF3
+      545F8364FFF33C558A77FE8F46F8FF1478B2E4FFAC815FE3DFE305D0131164
+    }
+  end
+end
