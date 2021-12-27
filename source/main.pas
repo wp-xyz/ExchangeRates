@@ -13,8 +13,8 @@ type
   { TMainForm }
 
   TMainForm = class(TForm)
+    btConvert: TBitBtn;
     btnGetExchangeRates: TButton;
-    btConvert: TButton;
     cbSource: TComboBox;
     cbDest: TComboBox;
     edSearchCountry: TEdit;
@@ -28,8 +28,11 @@ type
     Label2: TLabel;
     edDest: TEdit;
     SpeedButton1: TSpeedButton;
+    procedure btnClearSearchClick(Sender: TObject);
     procedure btnGetExchangeRatesClick(Sender: TObject);
     procedure btConvertClick(Sender: TObject);
+    procedure cbDestChange(Sender: TObject);
+    procedure cbSourceChange(Sender: TObject);
     procedure SymbolDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure SymbolDragOver(Sender, Source: TObject; X, Y: Integer; 
       State: TDragState; var Accept: Boolean);
@@ -37,7 +40,6 @@ type
       var UTF8Key: TUTF8Char);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure FormCreate(Sender: TObject);
-    procedure btnClearSearchClick(Sender: TObject);
     procedure GridCompareCells(Sender: TObject; ACol, ARow, BCol, 
       BRow: Integer; var Result: integer);
     procedure SpeedButton1Click(Sender: TObject);
@@ -45,6 +47,7 @@ type
   private
     FCurrenciesToIni: Boolean;
     function CreateIniFile: TCustomIniFile;
+    function FullCurrencyName(AShortName: String): String;
     procedure LoadFromIni;
     procedure PrepareGrid;
     procedure SaveToIni;
@@ -137,6 +140,11 @@ begin
   s := cbSource.Text;
   cbSource.Text := cbDest.Text;
   cbDest.Text := s;
+  
+  s := cbSource.Hint;
+  cbSource.Hint := cbDest.Hint;
+  cbDest.Hint := s;
+  
   edDest.Clear;
 end;
 
@@ -242,6 +250,21 @@ begin
   // Thid uses base currency USD; others are not allowed by the free version.
 end;
 
+procedure TMainForm.cbDestChange(Sender: TObject);
+begin
+  cbDest.Hint := FullCurrencyName(cbDest.Text);
+end;
+
+procedure TMainForm.cbSourceChange(Sender: TObject);
+begin
+  cbSource.Hint := FullCurrencyName(cbSource.Text);
+end;
+
+function TMainForm.CreateIniFile: TCustomIniFile;
+begin
+  Result := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
+end;
+
 procedure TMainForm.edSearchCountryUTF8KeyPress(Sender: TObject; 
   var UTF8Key: TUTF8Char);
 var
@@ -252,39 +275,6 @@ begin
   for i := 1 to Grid.RowCount-1 do
     if pos(s, Uppercase(Grid.Cells[0, i])) = 1 then
       Grid.Row := i;
-end;
-
-function TMainForm.CreateIniFile: TCustomIniFile;
-begin
-  Result := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
-end;
-
-procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-begin
-  if CanClose then
-    SaveToIni;
-end;
-
-procedure TMainForm.FormCreate(Sender: TObject);
-begin
-  LoadFromIni;
-  
-  if Grid.RowCount = 1 then
-  begin
-    PrepareGrid;
-    FCurrenciesToIni := true;
-
-    cbSource.Items.Assign(Grid.Cols[3]);
-    cbSource.Items.Delete(0);
-    cbSource.ItemIndex := -1;
-    
-    cbDest.Items.Assign(Grid.Cols[3]);
-    cbDest.Items.Delete(0);
-    cbDest.ItemIndex := -1;
-  end else
-    FCurrenciesToIni := false;
-  
-  Grid.RowHeights[0] := 2*Grid.DefaultRowHeight - 2*varCellPadding;
 end;
 
 procedure TMainForm.ExtractExchangeRates(AStream: TStream);
@@ -314,60 +304,117 @@ begin
   end;
 end;  
 
+procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  if CanClose then
+    SaveToIni;
+end;
+
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  LoadFromIni;
+  
+  if Grid.RowCount = 1 then
+  begin
+    PrepareGrid;
+    FCurrenciesToIni := true;
+
+    cbSource.Items.Assign(Grid.Cols[3]);
+    cbSource.Items.Delete(0);
+    cbSource.ItemIndex := -1;
+    
+    cbDest.Items.Assign(Grid.Cols[3]);
+    cbDest.Items.Delete(0);
+    cbDest.ItemIndex := -1;
+  end else
+    FCurrenciesToIni := false;
+  
+  Grid.RowHeights[0] := 2*Grid.DefaultRowHeight - 2*varCellPadding;
+end;
+
+function TMainForm.FullCurrencyName(AShortName: String): String;
+var
+  idx: Integer;
+begin
+  idx := Grid.Cols[3].IndexOf(AShortName);
+  if idx > -1 then
+    Result := Grid.Cells[2, idx]
+  else
+    Result := '';
+end;
+
 procedure TMainForm.LoadFromIni;
 var
   ini: TCustomIniFile;
-  L: TStringList;
-  i, r: Integer;
+  List: TStringList;
+  i, row: Integer;
   s: String;
   section: String;
   sa: TStringArray;
+  L, T, W, H: Integer;
+  R: TRect;
 begin
   ini := CreateIniFile;
-  try
-    App_ID := ini.ReadString('Settings', 'App_ID', '');
-  
+  try 
+    section := 'MainForm';
+    R := Screen.DesktopRect;
+    L := ini.ReadInteger(section, 'Left', Left);
+    T := ini.ReadInteger(section, 'Top', Top);
+    W := ini.ReadInteger(section, 'Width', Width);
+    H := ini.ReadInteger(section, 'Height', Height);
+    if W > R.Width then W := R.Width;
+    if L < R.Left then L := R.Left;
+    if L+W > R.Right then L := R.Right - W;
+    if H > R.Height then H := R.Height;
+    if T < R.Top then T := R.Top;
+    if T+H > R.Bottom then T := R.Height - H;
+    WindowState := wsNormal;
+    SetBounds(L, T, W, H);
+
     section := 'Exchange rates';
-    L := TStringList.Create;
+    List := TStringList.Create;
     Grid.BeginUpdate;
     try
-      ini.ReadSection(section, L);
+      ini.ReadSection(section, List);
       Grid.Clear;
-      Grid.RowCount := L.Count + 1;
-      r := Grid.RowCount;
-      r := Grid.FixedRows;
-      for i := 0 to L.Count-1 do begin
-        Grid.Cells[0, r] := L[i];
-        s := ini.ReadString(section, L[i], '');
+      Grid.RowCount := List.Count + 1;
+      row := Grid.FixedRows;
+      for i := 0 to List.Count-1 do begin
+        Grid.Cells[0, row] := List[i];
+        s := ini.ReadString(section, List[i], '');
         if s <> '' then
         begin
           sa := s.Split(';');
-          Grid.Cells[1, r] := sa[0];
-          Grid.Cells[2, r] := sa[1];
-          Grid.Cells[3, r] := sa[2];
+          Grid.Cells[1, row] := sa[0];
+          Grid.Cells[2, row] := sa[1];
+          Grid.Cells[3, row] := sa[2];
         end;
-        inc(r);
+        inc(row);
       end;
     finally
       Grid.EndUpdate;
-      L.Free;
+      List.Free;
     end;
 
-    L := TStringList.Create;
+    App_ID := ini.ReadString('AppIDs', 'OpenExchangeRates', '');
+
+    List := TStringList.Create;
     try
-      L.Duplicates := dupIgnore;
-      L.Sorted := true;
-      L.Assign(Grid.Cols[3]);
-      cbSource.Items.Assign(L);
-      cbDest.Items.Assign(L);
+      List.Duplicates := dupIgnore;
+      List.Sorted := true;
+      List.Assign(Grid.Cols[3]);
+      cbSource.Items.Assign(List);
+      cbDest.Items.Assign(List);
     finally
-      L.Free;
+      List.Free;
     end;
 
     section := 'Calculator';
     seSource.Value := ini.ReadFloat(section, 'Amount', 100.0);
     cbSource.Text := ini.ReadString(section, 'SourceCurrency', '');
+    cbSource.Hint := FullCurrencyName(cbSource.Text);
     cbDest.Text := ini.ReadString(section, 'DestinationCurrency', '');
+    cbDest.Hint := FullCurrencyName(cbDest.Text);
 
   finally
     ini.Free;
@@ -423,8 +470,15 @@ var
 begin
   ini := CreateIniFile;
   try
-    ini.WriteString('Settings', 'App_ID', App_ID);
-
+    section := 'MainForm';
+    if WindowState = wsNormal then
+    begin
+      ini.WriteInteger(section, 'Left', Left);
+      ini.WriteInteger(section, 'Top', Top);
+      ini.WriteInteger(section, 'Width', Width);
+      ini.WriteInteger(section, 'Height', Height);
+    end;
+    
     section := 'Calculator';
     ini.WriteFloat(section, 'Amount', seSource.Value);
     ini.WriteString(section, 'SourceCurrency', cbSource.Text);
@@ -439,6 +493,8 @@ begin
           Grid.Cells[1, i] + ';' + Grid.Cells[2, i] + ';' + Grid.Cells[3, i]);
       FCurrenciesToIni := false;
     end;
+
+    ini.WriteString('AppIDs', 'OpenExchangeRates', App_ID);
   finally
     ini.Free;
   end;
@@ -452,9 +508,15 @@ begin
   begin
     symbol := Grid.Cells[3, Grid.Row];
     if Sender = cbSource then
+    begin
       cbSource.Text := symbol;
+      cbSource.Hint := FullCurrencyName(symbol);
+    end;
     if Sender = cbDest then
+    begin
       cbDest.Text := symbol;
+      cbDest.Hint := FullCurrencyName(symbol);
+    end;
   end;
 end;
 
