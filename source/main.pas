@@ -13,7 +13,7 @@ type
   { TMainForm }
 
   TMainForm = class(TForm)
-    btConvert: TBitBtn;
+    btnConvert: TBitBtn;
     btnGetExchangeRates: TButton;
     cbSource: TComboBox;
     cbDest: TComboBox;
@@ -27,10 +27,10 @@ type
     btnClearSearch: TSpeedButton;
     Label2: TLabel;
     edDest: TEdit;
-    SpeedButton1: TSpeedButton;
+    btnSwap: TSpeedButton;
     procedure btnClearSearchClick(Sender: TObject);
     procedure btnGetExchangeRatesClick(Sender: TObject);
-    procedure btConvertClick(Sender: TObject);
+    procedure btnConvertClick(Sender: TObject);
     procedure cbDestChange(Sender: TObject);
     procedure cbSourceChange(Sender: TObject);
     procedure SymbolDragDrop(Sender, Source: TObject; X, Y: Integer);
@@ -42,7 +42,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure GridCompareCells(Sender: TObject; ACol, ARow, BCol, 
       BRow: Integer; var Result: integer);
-    procedure SpeedButton1Click(Sender: TObject);
+    procedure btnSwapClick(Sender: TObject);
     
   private
     FCurrenciesToIni: Boolean;
@@ -133,7 +133,7 @@ begin
     Result := -Result;
 end;
 
-procedure TMainForm.SpeedButton1Click(Sender: TObject);
+procedure TMainForm.btnSwapClick(Sender: TObject);
 var
   s: String;
 begin
@@ -145,7 +145,7 @@ begin
   cbSource.Hint := cbDest.Hint;
   cbDest.Hint := s;
   
-  edDest.Clear;
+  btnConvertClick(nil);
 end;
 
 procedure TMainForm.btnGetExchangeRatesClick(Sender: TObject);
@@ -192,7 +192,7 @@ begin
   end;
 end;
 
-procedure TMainForm.btConvertClick(Sender: TObject);
+procedure TMainForm.btnConvertClick(Sender: TObject);
 var
   srcValue, destValue: Double;
   srcCurr, destCurr: String;
@@ -204,6 +204,7 @@ begin
   begin
     MessageDlg('No source currency selected.', mtError, [mbOK], 0);
     cbSource.SetFocus;
+    edDest.Clear;
     exit;
   end;
   
@@ -212,6 +213,7 @@ begin
   begin
     MessageDlg('Source currency symbol not found.', mtError, [mbOk], 0);
     cbSource.SetFocus;
+    edDest.Clear;
     exit;
   end;
   srcRate := StrToFloat(Grid.Cells[1, idx]);
@@ -221,6 +223,7 @@ begin
   begin
     MessageDlg('No result currency selected.', mtError, [mbOk], 0);
     cbDest.SetFocus;
+    edDest.Clear;
     exit;
   end;
   
@@ -229,6 +232,7 @@ begin
   begin
     MessageDlg('Result currency symbol not found.', mtError, [mbOK], 0);
     cbDest.SetFocus;
+    edDest.Clear;
     exit;
   end;
   destRate := StrToFloat(Grid.Cells[1, idx]);
@@ -237,9 +241,10 @@ begin
   begin
     MessageDlg('No valid number entered.', mtError, [mbOK], 0);
     seSource.SetFocus;
+    edDest.Clear;
     exit;
   end;
-  destValue := srcValue * srcRate / destRate;
+  destValue := srcValue / srcRate * destRate;
   
   edDest.Text := FormatFloat('0.00', destValue);
 end;
