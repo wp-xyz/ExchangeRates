@@ -72,6 +72,7 @@ object MainForm: TMainForm
       Width = 8
       BorderSpacing.Left = 16
       Caption = '='
+      Color = clDefault
       ParentColor = False
     end
     object cbDest: TComboBox
@@ -250,6 +251,7 @@ object MainForm: TMainForm
       Width = 53
       BorderSpacing.Left = 40
       Caption = 'Search for'
+      Color = clDefault
       ParentColor = False
     end
     object edSearchCountry: TEdit

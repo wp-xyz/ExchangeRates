@@ -33,9 +33,9 @@ type
     procedure btnConvertClick(Sender: TObject);
     procedure cbDestChange(Sender: TObject);
     procedure cbSourceChange(Sender: TObject);
-    procedure SymbolDragDrop(Sender, Source: TObject; X, Y: Integer);
-    procedure SymbolDragOver(Sender, Source: TObject; X, Y: Integer; 
-      State: TDragState; var Accept: Boolean);
+    procedure SymbolDragDrop(Sender, Source: TObject; {%H-}X, {%H-}Y: Integer);
+    procedure SymbolDragOver(Sender, Source: TObject; {%H-}X, {%H-}Y: Integer; 
+      {%H-}State: TDragState; var Accept: Boolean);
     procedure edSearchCountryUTF8KeyPress(Sender: TObject; 
       var UTF8Key: TUTF8Char);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -68,10 +68,12 @@ implementation
 {$R *.lfm}
 
 uses
-  {$IF FPC_FullVersion >= 30200}
-  opensslsockets,
-  {$IFEND}
-  fphttpclient,
+  {$IFDEF MSWINDOWS}
+   windows, wininet,
+  {$ELSE}
+   {$IF FPC_FullVersion >= 30200}opensslsockets,{$IFEND}
+   fphttpclient,
+  {$ENDIF}
   fpjson, jsonparser, math;
 
 const 
@@ -80,6 +82,81 @@ const
 var
   APP_ID: String = ''; 
 
+{$IFDEF MSWINDOWS}
+{ This function translates a WinInet Error Code to a description of the error.
+  From: https://theroadtodelphi.com/category/wininet/ }
+function GetWinInetError(ErrorCode: Cardinal): string;
+const
+  winetdll = 'wininet.dll';
+var
+  len: Integer;
+  buffer: PChar;
+begin
+  len := FormatMessage(
+    FORMAT_MESSAGE_FROM_HMODULE or FORMAT_MESSAGE_FROM_SYSTEM or
+    FORMAT_MESSAGE_ALLOCATE_BUFFER or FORMAT_MESSAGE_IGNORE_INSERTS or FORMAT_MESSAGE_ARGUMENT_ARRAY,
+    {%H-}Pointer(GetModuleHandle(winetdll)), ErrorCode, 0, @buffer, SizeOf(Buffer), nil
+  );
+  try
+    while (len > 0) and (Buffer[len - 1] in [#0..#32, '.']) do
+      dec(len);
+    SetString(Result, buffer, len);
+  finally
+    LocalFree({%H-}HLOCAL(buffer));
+  end;
+end;
+
+// Adapted from
+//   http://www.scalabium.com/faq/dct0080.htm
+function Download(URL: String; AStream: TStream; out AErrMsg: String): Boolean;
+const
+  KB = 1024;
+var
+  netHandle: HInternet;
+  urlHandle: HInternet;
+  buffer: array[0..4*KB-1] of Byte;
+  bytesRead: dWord = 0;
+  errCode: Integer = 0;
+begin
+  Result := false;
+  AErrMsg := '';
+  NetHandle := InternetOpen('Mozilla/5.0(compatible; WinInet)', INTERNET_OPEN_TYPE_PRECONFIG, nil, nil, 0);
+
+  // NetHandle valid?
+  if netHandle = nil then
+  begin
+    errCode := GetLastError;
+    AErrMsg := GetWinInetError(errCode);
+    exit;
+  end;
+
+  try
+    urlHandle := InternetOpenUrl(netHandle, PChar(URL), nil, 0, INTERNET_FLAG_RELOAD, 0);
+
+    // UrlHandle valid?
+    if urlHandle = nil then
+    begin
+      errCode := GetLastError;
+      AErrMsg := GetWinInetError(errCode);
+      exit;
+    end;
+
+    try
+      repeat
+        InternetReadFile(urlHandle, @buffer, SizeOf(buffer), bytesRead);
+        if bytesRead > 0 then
+          AStream.Write(buffer, bytesRead);
+      until bytesRead = 0;
+      AStream.Position := 0;
+      Result := true;
+    finally
+      InternetCloseHandle(urlHandle);
+    end
+  finally
+    InternetCloseHandle(netHandle);
+  end;
+end;
+{$ELSE}
 // Get file from the internet
 function Download(URL: String; AStream: TStream; out AErrMsg: String): Boolean;
 begin
@@ -101,6 +178,7 @@ begin
       Free;
     end;
 end;
+{$ENDIF}
 
 
 { TMainForm }
