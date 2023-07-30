@@ -33,6 +33,7 @@ type
     procedure btnConvertClick(Sender: TObject);
     procedure cbDestChange(Sender: TObject);
     procedure cbSourceChange(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
     procedure SymbolDragDrop(Sender, Source: TObject; {%H-}X, {%H-}Y: Integer);
     procedure SymbolDragOver(Sender, Source: TObject; {%H-}X, {%H-}Y: Integer; 
       {%H-}State: TDragState; var Accept: Boolean);
@@ -46,6 +47,7 @@ type
     
   private
     FCurrenciesToIni: Boolean;
+    FActivated: Boolean;
     function CreateIniFile: TCustomIniFile;
     function FullCurrencyName(AShortName: String): String;
     procedure LoadFromIni;
@@ -387,6 +389,16 @@ begin
   end;
 end;  
 
+procedure TMainForm.FormActivate(Sender: TObject);
+begin
+  if not FActivated then
+  begin
+    FActivated := true;
+    LoadFromIni;
+    Grid.RowHeights[0] := 2*Grid.DefaultRowHeight - 2*varCellPadding;
+  end;
+end;
+
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   if CanClose then
@@ -395,8 +407,6 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
-  LoadFromIni;
-  
   if Grid.RowCount = 1 then
   begin
     PrepareGrid;
@@ -411,9 +421,7 @@ begin
     cbDest.ItemIndex := -1;
   end else
     FCurrenciesToIni := false;
-  
-  Grid.RowHeights[0] := 2*Grid.DefaultRowHeight - 2*varCellPadding;
-end;
+  end;
 
 function TMainForm.FullCurrencyName(AShortName: String): String;
 var
