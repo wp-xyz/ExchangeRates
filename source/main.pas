@@ -14,7 +14,7 @@ type
 
   TMainForm = class(TForm)
     btnConvert: TBitBtn;
-    btnGetExchangeRates: TButton;
+    btnGetExchangeRates: TBitBtn;
     cbSource: TComboBox;
     cbDest: TComboBox;
     edSearchCountry: TEdit;
