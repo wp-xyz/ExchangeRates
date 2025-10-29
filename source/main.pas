@@ -368,7 +368,7 @@ end;
 
 function TMainForm.CreateIniFile: TCustomIniFile;
 begin
-  Result := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'), [ifoFormatSettingsActive]);
+  Result := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
 end;
 
 procedure TMainForm.edSearchCountryUTF8KeyPress(Sender: TObject; 
@@ -488,9 +488,6 @@ var
 begin
   ini := CreateIniFile;
   try 
-    ini.FormatSettings.DecimalSeparator := '.';
-    ini.FormatSettings.ThousandSeparator := ',';
-
     section := 'MainForm';
     R := Screen.DesktopRect;
     L := ini.ReadInteger(section, 'Left', Left);
@@ -610,9 +607,6 @@ var
 begin
   ini := CreateIniFile;
   try
-    ini.FormatSettings.DecimalSeparator := '.';
-    ini.FormatSettings.ThousandSeparator := ',';
-
     section := 'MainForm';
     if WindowState = wsNormal then
     begin
