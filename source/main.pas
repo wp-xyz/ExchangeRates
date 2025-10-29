@@ -25,26 +25,25 @@ type
     ImageList1: TImageList;
     Label1: TLabel;
     btnClearSearch: TSpeedButton;
-    Label2: TLabel;
+    lblEquals: TLabel;
     edDest: TEdit;
     btnSwap: TSpeedButton;
     procedure btnClearSearchClick(Sender: TObject);
-    procedure btnGetExchangeRatesClick(Sender: TObject);
     procedure btnConvertClick(Sender: TObject);
+    procedure btnGetExchangeRatesClick(Sender: TObject);
+    procedure btnSwapClick(Sender: TObject);
     procedure cbDestChange(Sender: TObject);
     procedure cbSourceChange(Sender: TObject);
+    procedure edSearchCountryUTF8KeyPress(Sender: TObject; var UTF8Key: TUTF8Char);
     procedure FormActivate(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure FormCreate(Sender: TObject);
+    procedure GridCompareCells(Sender: TObject; ACol, ARow, BCol, BRow: Integer;
+      var Result: integer);
     procedure SymbolDragDrop(Sender, Source: TObject; {%H-}X, {%H-}Y: Integer);
     procedure SymbolDragOver(Sender, Source: TObject; {%H-}X, {%H-}Y: Integer; 
       {%H-}State: TDragState; var Accept: Boolean);
-    procedure edSearchCountryUTF8KeyPress(Sender: TObject; 
-      var UTF8Key: TUTF8Char);
-    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-    procedure FormCreate(Sender: TObject);
-    procedure GridCompareCells(Sender: TObject; ACol, ARow, BCol, 
-      BRow: Integer; var Result: integer);
-    procedure btnSwapClick(Sender: TObject);
-    
+
   private
     FCurrenciesToIni: Boolean;
     FActivated: Boolean;
@@ -242,6 +241,7 @@ begin
       'and enter the received App_ID in the next dialog.', mtError, mbYesNoCancel, 0);
     if res = mrYes then
     begin
+      cInputQueryEditSizePercents := 0;
       App_ID := InputBox('Access to OpenExchangeRates.org', 'Enter App_ID', '');
       if App_ID = '' then
         exit;
@@ -329,10 +329,19 @@ begin
   edDest.Text := FormatFloat('0.00', destValue);
 end;
 
+{ 'latest.json'
+    --> returns json with "currSymbol": "exchange rate"
+  'currencies.json'
+    --> returns json with "currSymbol": "currency name"
+  'historical/2013-02-16.json'
+    --> returns json with exchange rates (like 'latest.json')
+        but for the specified date contained in file as item "timestamp: ...
+        (UNIX time stamp).
+}
 function TMainForm.BuildURL: String;
 begin
   Result := Format('%s%s?app_id=%s', [BASE_URL, 'latest.json', APP_ID]);
-  // Thid uses base currency USD; others are not allowed by the free version.
+  // This uses base currency USD; others are not allowed by the free version.
 end;
 
 procedure TMainForm.cbDestChange(Sender: TObject);
@@ -362,6 +371,26 @@ begin
       Grid.Row := i;
 end;
 
+(*
+Sample stream returned from the openexchangerates server:
+{
+    disclaimer: "https://openexchangerates.org/terms/",
+    license: "https://openexchangerates.org/license/",
+    timestamp: 1449877801,
+    base: "USD",
+    rates: {
+        AED: 3.672538,
+        AFN: 66.809999,
+        ALL: 125.716501,
+        AMD: 484.902502,
+        ANG: 1.788575,
+        AOA: 135.295998,
+        ARS: 9.750101,
+        AUD: 1.390866,
+        /* ... */
+    }
+}
+*)
 procedure TMainForm.ExtractExchangeRates(AStream: TStream);
 var
   jParser: TJsonParser;
@@ -379,7 +408,7 @@ begin
     begin
       currCode := jRates.Names[i];
       exchRate := jRates.Items[i].AsFloat;
-      for j := 1 to Grid.RowCount-1 do 
+      for j := 1 to Grid.RowCount-1 do
         if Grid.Cells[3, j] = currCode then
           Grid.Cells[1, j] := FormatFloat('0.0000', exchRate);
     end;
@@ -464,26 +493,31 @@ begin
 
     section := 'Exchange rates';
     List := TStringList.Create;
-    Grid.BeginUpdate;
     try
       ini.ReadSection(section, List);
-      Grid.Clear;
-      Grid.RowCount := List.Count + 1;
-      row := Grid.FixedRows;
-      for i := 0 to List.Count-1 do begin
-        Grid.Cells[0, row] := List[i];
-        s := ini.ReadString(section, List[i], '');
-        if s <> '' then
+      Grid.BeginUpdate;
+      try
+        if List.Count > 0 then
         begin
-          sa := s.Split(';');
-          Grid.Cells[1, row] := sa[0];
-          Grid.Cells[2, row] := sa[1];
-          Grid.Cells[3, row] := sa[2];
+          Grid.RowCount := List.Count + 1;
+          row := Grid.FixedRows;
+          for i := 0 to List.Count-1 do begin
+            Grid.Cells[0, row] := List[i];
+            s := ini.ReadString(section, List[i], '');
+            if s <> '' then
+            begin
+              sa := s.Split(';');
+              Grid.Cells[1, row] := sa[0];
+              Grid.Cells[2, row] := sa[1];
+              Grid.Cells[3, row] := sa[2];
+            end;
+            inc(row);
+          end;
         end;
-        inc(row);
+      finally
+        Grid.EndUpdate;
       end;
     finally
-      Grid.EndUpdate;
       List.Free;
     end;
 
