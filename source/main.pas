@@ -181,6 +181,18 @@ begin
 end;
 {$ENDIF}
 
+function MyStrToFloat(s: String): Double;
+var
+  fs: TFormatSettings;
+begin
+  if not TryStrToFloat(s, Result) then
+  begin
+    fs := FormatSettings;
+    if fs.DecimalSeparator = '.' then fs.DecimalSeparator := ',' else fs.DecimalSeparator := '.';
+    Result := StrToFloat(s, fs);
+  end;
+end;
+
 
 { TMainForm }
 
@@ -296,7 +308,7 @@ begin
     edDest.Clear;
     exit;
   end;
-  srcRate := StrToFloat(Grid.Cells[1, idx]);
+  srcRate := MyStrToFloat(Grid.Cells[1, idx]);
   
   destCurr := cbDest.Text;
   if destCurr = '' then
@@ -315,7 +327,7 @@ begin
     edDest.Clear;
     exit;
   end;
-  destRate := StrToFloat(Grid.Cells[1, idx]);
+  destRate := MyStrToFloat(Grid.Cells[1, idx]);
 
   if not TryStrToFloat(seSource.Text, srcValue) then
   begin
@@ -356,7 +368,7 @@ end;
 
 function TMainForm.CreateIniFile: TCustomIniFile;
 begin
-  Result := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'));
+  Result := TIniFile.Create(ChangeFileExt(Application.ExeName, '.ini'), [ifoFormatSettingsActive]);
 end;
 
 procedure TMainForm.edSearchCountryUTF8KeyPress(Sender: TObject; 
@@ -476,6 +488,9 @@ var
 begin
   ini := CreateIniFile;
   try 
+    ini.FormatSettings.DecimalSeparator := '.';
+    ini.FormatSettings.ThousandSeparator := ',';
+
     section := 'MainForm';
     R := Screen.DesktopRect;
     L := ini.ReadInteger(section, 'Left', Left);
@@ -595,6 +610,9 @@ var
 begin
   ini := CreateIniFile;
   try
+    ini.FormatSettings.DecimalSeparator := '.';
+    ini.FormatSettings.ThousandSeparator := ',';
+
     section := 'MainForm';
     if WindowState = wsNormal then
     begin
